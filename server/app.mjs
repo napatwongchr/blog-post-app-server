@@ -25,7 +25,7 @@ app.post("/posts", async (req, res) => {
   try {
     await connectionPool.query(
       `insert into posts (user_id, title, content, category, length, created_at, updated_at, published_at, status)
-      values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         1, // นี่คือ user_id ที่ถูกจำลองขึ้นมา เนื่องจากเรายังไม่มีระบบ Authentication ในส่วน Back End
         newPost.title,
@@ -48,6 +48,25 @@ app.post("/posts", async (req, res) => {
 
   return res.status(201).json({
     message: "Created post sucessfully",
+  });
+});
+
+app.get("/posts", async (req, res) => {
+  // ลอจิกในอ่านข้อมูลโพสต์ทั้งหมดในระบบ
+  // 1) เขียน Query เพื่ออ่านข้อมูลโพสต์ ด้วย Connection Pool
+  let results;
+
+  try {
+    results = await connectionPool.query(`select * from posts`);
+  } catch {
+    return res.status(500).json({
+      message: "Server could not read post because database issue",
+    });
+  }
+
+  // 2) Return ตัว Response กลับไปหา Client
+  return res.status(200).json({
+    data: results.rows,
   });
 });
 
