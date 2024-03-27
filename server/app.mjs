@@ -22,21 +22,28 @@ app.post("/posts", async (req, res) => {
   };
 
   // 2) เขียน Query เพื่อ Insert ข้อมูลโพสต์ ด้วย Connection Pool
-  await connectionPool.query(
-    `insert into posts (user_id, title, content, category, length, created_at, updated_at, published_at, status)
-	  values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [
-      1, // นี่คือ user_id ที่ถูกจำลองขึ้นมา เนื่องจากเรายังไม่มีระบบ Authentication ในส่วน Back End
-      newPost.title,
-      newPost.content,
-      newPost.category,
-      newPost.length,
-      newPost.created_at,
-      newPost.updated_at,
-      newPost.published_at,
-      newPost.status,
-    ]
-  );
+  try {
+    await connectionPool.query(
+      `insert into posts (user_id, title, content, category, length, created_at, updated_at, published_at, status)
+      values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        1, // นี่คือ user_id ที่ถูกจำลองขึ้นมา เนื่องจากเรายังไม่มีระบบ Authentication ในส่วน Back End
+        newPost.title,
+        newPost.content,
+        newPost.category,
+        newPost.length,
+        newPost.created_at,
+        newPost.updated_at,
+        newPost.published_at,
+        newPost.status,
+      ]
+    );
+  } catch {
+    return res.status(500).json({
+      message: "Server could not create post because database issue",
+    });
+  }
+
   // 3) Return ตัว Response กลับไปหา Client ว่าสร้างสำเร็จ
 
   return res.status(201).json({
