@@ -70,6 +70,71 @@ app.get("/posts", async (req, res) => {
   });
 });
 
+app.get("/posts/:postId", async (req, res) => {
+  // ลอจิกในอ่านข้อมูลโพสต์ด้วย Id ในระบบ
+  // 1) Access ตัว Endpoint Parameter ด้วย req.params
+  const postIdFromClient = req.params.postId;
+
+  // 2) เขียน Query เพื่ออ่านข้อมูลโพสต์ ด้วย Connection Pool
+  const results = await connectionPool.query(
+    `
+		select * from posts where post_id=$1
+	`,
+    [postIdFromClient]
+  );
+
+  // เพิ่ม Conditional logic ว่าถ้าข้อมูลที่ได้กลับมาจากฐานข้อมูลเป็นค่า false (null / undefined)
+  // ก็ให้ Return response ด้วย status code 404
+  // พร้อมกับข้อความว่า "Server could not find a requested post (post id: x)"
+  if (!results.rows[0]) {
+    return res.status(404).json({
+      message: `Server could not find a requested post (post id: ${postIdFromClient})`,
+    });
+  }
+
+  // 3) Return ตัว Response กลับไปหา Client
+  return res.status(200).json({
+    data: results.rows[0],
+  });
+});
+
+app.put("/posts/:postId", async (req, res) => {
+  // ลอจิกในการแก้ไขข้อมูลโพสต์ด้วย Id ในระบบ
+
+  // 1) Access ตัว Endpoint Parameter ด้วย req.params
+  // และข้อมูลโพสต์ที่ Client ส่งมาแก้ไขจาก Body ของ Request
+  const postIdFromClient = req.params.postId;
+  const updatedPost = { ...req.body, updated_at: new Date() };
+
+  // 2) เขียน Query เพื่อแก้ไขข้อมูลโพสต์ ด้วย Connection Pool
+  await connectionPool.query(
+    `
+      update posts
+      set title = $2,
+          content = $3,
+          category = $4,
+          length = $5,
+          status = $6,
+          updated_at = $7
+      where post_id = $1
+    `,
+    [
+      postIdFromClient,
+      updatedPost.title,
+      updatedPost.content,
+      updatedPost.category,
+      updatedPost.length,
+      updatedPost.status,
+      updatedPost.updated_at,
+    ]
+  );
+
+  // 3) Return ตัว Response กลับไปหา Client
+  return res.status(200).json({
+    message: "Updated post sucessfully",
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running at ${port}`);
 });
