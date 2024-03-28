@@ -135,6 +135,22 @@ app.put("/posts/:postId", async (req, res) => {
   });
 });
 
+app.delete("/posts/:postId", async (req, res) => {
+  // ลอจิกในการลบข้อมูลโพสต์ด้วย Id ในระบบ
+  // 1) Access ตัว Endpoint Parameter ด้วย req.params
+  const postIdFromClient = req.params.postId;
+  // 2) เขียน Query เพื่อลบข้อมูลโพสต์ ด้วย Connection Pool
+  await connectionPool.query(
+    `delete from posts
+	   where post_id = $1`,
+    [postIdFromClient]
+  );
+  // 3) Return ตัว Response กลับไปหา Client
+  return res.status(200).json({
+    message: "Delete post sucessfully",
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running at ${port}`);
 });
