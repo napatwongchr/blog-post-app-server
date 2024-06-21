@@ -56,8 +56,20 @@ app.get("/posts", async (req, res) => {
   // 1) เขียน Query เพื่ออ่านข้อมูลโพสต์ ด้วย Connection Pool
   let results;
 
+  const category = req.query.category;
+  const length = req.query.length;
+
   try {
-    results = await connectionPool.query(`select * from posts`);
+    results = await connectionPool.query(
+      `
+      select * from posts 
+      where 
+          (category = $1 or $1 is null or $1 = '') 
+          and 
+          (length = $2 or $2 is null or $2 = '');
+      `,
+      [category, length]
+    );
   } catch {
     return res.status(500).json({
       message: "Server could not read post because database issue",
